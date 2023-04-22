@@ -2,7 +2,7 @@ import random
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.utils.decorators import method_decorator
-from .serializers import TurfSerializer, RatingSerializer, TimingsSerializer, BookingSerializer
+from .serializers import TurfSerializer, RatingSerializer, TimingsSerializer, BookingSerializer, PartialTurfSerializer
 from .models import Turf, Rating, Timings, Booking, Profile
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -42,10 +42,17 @@ class RegisterTurf(APIView):
 class GetTurf(APIView):
     @staticmethod
     def get(request):
-        turf = Turf.objects.all().values_list('id', 'name', 'start_time', 'end_time', 'latitude', 'longitude',
-                                              'total_nets', 'image', 'contact', 'rating')
-        serializer = TurfSerializer(turf, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        turf = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'latitude', 'longitude',
+                                         'total_nets', 'image', 'contact')
+        # turf = Turf.objects.all()
+        serializer = PartialTurfSerializer(turf, many=True)
+        ids = []
+        for i in serializer.data:
+            ids.append(i['id'])
+        print(ids)
+        rating = Rating.objects.filter(turf_id__in=ids)
+        rating_serializer = RatingSerializer(rating, many=True)
+        return Response({'turf': serializer.data, 'rating': rating_serializer.data}, status=status.HTTP_200_OK)
 
 
 class GetTurfDetails(APIView):
