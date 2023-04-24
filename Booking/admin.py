@@ -5,7 +5,7 @@ from import_export.admin import ExportActionMixin
 
 class TurfAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = ('name', 'manager', 'start_time', 'end_time', 'landmark', 'street', 'area', 'city', 'state',
-                    'pincode', 'contact', 'email', 'length', 'width', 'longitude', 'latitude', 'image', 'total_nets',
+                    'pincode', 'contact', 'email', 'length', 'width', 'image', 'total_nets',
                     'description', 'price', 'verified')
 
 
@@ -14,11 +14,11 @@ class RatingAdmin(ExportActionMixin, admin.ModelAdmin):
 
 
 class TimingAdmin(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('turf', 'date', 'start_time', 'end_time')
+    list_display = ('turf', 'date', 'start_time')
 
 
 class BookingAdmin(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('turf', 'user', 'contact', 'email', 'date', 'time', 'duration', 'price')
+    list_display = ('turf', 'user', 'contact', 'date', 'time', 'price')
 
 
 admin.site.register(Turf, TurfAdmin)

@@ -1,5 +1,6 @@
 from .models import Turf, Rating, Timings, Booking, Profile
 from rest_framework import serializers
+from django.core.serializers.json import Serializer
 
 
 class TurfSerializer(serializers.ModelSerializer):

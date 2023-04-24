@@ -148,5 +148,5 @@ TWILIO_PHONE_NUMBER = '+15077087587'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL = 'goboxbook@gmail.com'
-PASSWORD = 'jash@mc12'
+EMAIL = 'goboxconfirmation@gmail.com'
+PASSWORD = 'jash@gobox2111'

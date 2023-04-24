@@ -31,7 +31,7 @@ class Turf(models.Model):
     image = models.ImageField(upload_to='turf_images')
     total_nets = models.PositiveSmallIntegerField()
     description = models.TextField()
-    price = models.IntegerField()
+    price = models.IntegerField(default=1000)
     verified = models.BooleanField(default=False)
     object = models.manager
 

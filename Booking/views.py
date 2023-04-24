@@ -1,4 +1,5 @@
 import random
+from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.utils.decorators import method_decorator
@@ -57,7 +58,19 @@ class GetTurfDetails(APIView):
     def get(request):
         turf = Turf.objects.get(id=request.GET.get('id'))
         serializer = TurfSerializer(turf)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        start_time = turf.start_time
+        end_time = turf.end_time
+        time_slots = []
+        while start_time <= end_time:
+            time_slots.append(start_time.strftime('%H:%M'))
+            start_time += timedelta(hours=1)
+        available_nets = []
+        for time_slot in time_slots:
+            if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
+                                          time=time_slot)) == turf.total_nets:
+                available_nets.append({'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+                    turf_id=turf.id, date=request.GET.get('date'), time=time_slot))})
+        return Response({'turf': serializer.data, 'available_nets': available_nets}, status=status.HTTP_200_OK)
 
 
 class GiveTurfRating(APIView):
@@ -138,8 +151,10 @@ class BookTurf(APIView):
         serializers = []
         booked = []
         for i in booking_details:
-            if Booking.objects.filter(date=booking_details[i]['date'], time=booking_details[i]['time']).exists():
+            if len(Booking.objects.filter(turf_id=turf_data, date=booking_details[i]['date'],
+                                          time=booking_details[i]['time'])) == 3:
                 booked.append(booking_details[i])
+                pass
             serializers.append(BookingSerializer(data={
                 'turf': turf_data,
                 'user': user_data,
