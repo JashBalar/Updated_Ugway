@@ -28,13 +28,12 @@ class Turf(models.Model):
     email = models.EmailField()
     length = models.PositiveSmallIntegerField()
     width = models.PositiveSmallIntegerField()
-    longitude = models.DecimalField(max_digits=9, decimal_places=6)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6)
     image = models.ImageField(upload_to='turf_images')
     total_nets = models.PositiveSmallIntegerField()
     description = models.TextField()
     price = models.IntegerField()
     verified = models.BooleanField(default=False)
+    object = models.manager
 
     def __str__(self):
         return self.name + ' - ' + self.city
@@ -54,6 +53,7 @@ class Rating(models.Model):
     rating_3_count = models.PositiveSmallIntegerField(default=0)
     rating_4_count = models.PositiveSmallIntegerField(default=0)
     rating_5_count = models.PositiveSmallIntegerField(default=0)
+    object = models.manager
 
     def __str__(self):
         return self.turf.name
@@ -61,9 +61,10 @@ class Rating(models.Model):
 
 class Timings(models.Model):
     turf = models.ForeignKey(Turf, on_delete=models.CASCADE)
-    date = models.DateField()
+    date = models.DateField(null=True, blank=True)
     start_time = models.TimeField()
-    end_time = models.TimeField()
+    price = models.PositiveSmallIntegerField()
+    object = models.manager
 
     def __str__(self):
         return self.turf.name
@@ -73,11 +74,10 @@ class Booking(models.Model):
     turf = models.ForeignKey(Turf, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     contact = models.CharField(max_length=10)
-    email = models.EmailField()
     date = models.DateField()
     time = models.TimeField()
-    duration = models.PositiveSmallIntegerField()
     price = models.PositiveSmallIntegerField()
+    object = models.manager
 
     def __str__(self):
         return self.user
@@ -88,6 +88,7 @@ class Profile(models.Model):
     phone_number = models.CharField(max_length=10)
     otp = models.CharField(max_length=6, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
+    object = models.manager
 
     def __str__(self):
         return self.user.username

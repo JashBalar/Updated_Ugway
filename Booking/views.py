@@ -19,9 +19,8 @@ class RegisterTurf(APIView):
             'street': request.data['street'], 'area': request.data['area'], 'city': request.data['city'],
             'state': request.data['state'], 'pincode': request.data['pincode'], 'contact': request.data['contact'],
             'email': request.data['email'], 'length': request.data['length'], 'width': request.data['width'],
-            'longitude': request.data['longitude'], 'latitude': request.data['latitude'],
             'total_nets': request.data['total_nets'], 'description': request.data['description'],
-            'price': request.data['price'], 'verified': request.data['verified'], 'booked': request.data['booked']
+            'price': request.data['price'], 'verified': request.data['verified']
         }
         success = True
         response = []
@@ -44,12 +43,10 @@ class GetTurf(APIView):
     def get(request):
         turf = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'latitude', 'longitude',
                                          'total_nets', 'image', 'contact')
-        # turf = Turf.objects.all()
         serializer = PartialTurfSerializer(turf, many=True)
         ids = []
         for i in serializer.data:
             ids.append(i['id'])
-        print(ids)
         rating = Rating.objects.filter(turf_id__in=ids)
         rating_serializer = RatingSerializer(rating, many=True)
         return Response({'turf': serializer.data, 'rating': rating_serializer.data}, status=status.HTTP_200_OK)
@@ -117,15 +114,48 @@ class GetTurfTimings(APIView):
 class BookTurf(APIView):
     @staticmethod
     def post(request):
-        serializer = BookingSerializer(data=request.data)
-        turf_id = request.data.get('turf_id')
-        turf = Turf.objects.get(id=turf_id)
-        if turf.booked:
-            return Response({'error': 'Turf is already booked'}, status=status.HTTP_400_BAD_REQUEST)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        """
+        "details": [
+        {
+            "date": "",
+            "time": "",
+            "price": ""
+        },
+        {
+            "date": "",
+            "time": "",
+            "price": ""
+        }
+    ]
+        :param request:
+        :return:
+        """
+        booking_data = request.data
+        turf_data = booking_data['turf']
+        user_data = booking_data['user']
+        contact_data = booking_data['contact']
+        booking_details = booking_data['details']
+        serializers = []
+        booked = []
+        for i in booking_details:
+            if Booking.objects.filter(date=booking_details[i]['date'], time=booking_details[i]['time']).exists():
+                booked.append(booking_details[i])
+            serializers.append(BookingSerializer(data={
+                'turf': turf_data,
+                'user': user_data,
+                'contact': contact_data,
+                'date': i['date'],
+                'time': i['time'],
+                'price': i['price']
+            }))
+        if booked:
+            return Response({'booked': booked}, status=status.HTTP_400_BAD_REQUEST)
+        for serializer in serializers:
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializers, status=status.HTTP_201_CREATED)
 
 
 class GetBookings(APIView):
