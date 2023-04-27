@@ -1,5 +1,5 @@
 import random
-from datetime import timedelta
+from datetime import timedelta, time, datetime
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.utils.decorators import method_decorator
@@ -14,36 +14,18 @@ from .helper import MessageHandler
 class RegisterTurf(APIView):
     @staticmethod
     def post(request):
-        form_data = {
-            'name': request.data['name'], 'manager': request.data['manager'], 'start_time': request.data['start_time'],
-            'end_time': request.data['end_time'], 'landmark': request.data['landmark'],
-            'street': request.data['street'], 'area': request.data['area'], 'city': request.data['city'],
-            'state': request.data['state'], 'pincode': request.data['pincode'], 'contact': request.data['contact'],
-            'email': request.data['email'], 'length': request.data['length'], 'width': request.data['width'],
-            'total_nets': request.data['total_nets'], 'description': request.data['description'],
-            'price': request.data['price'], 'verified': request.data['verified']
-        }
-        success = True
-        response = []
-        for images in request.FILES.getlist('image'):
-            form_data['image'] = images
-            serializer = TurfSerializer(data=form_data)
-            if serializer.is_valid():
-                serializer.save()
-                response.append(serializer.data)
-            else:
-                success = False
-        if success:
-            return Response(response, status=status.HTTP_201_CREATED)
         serializer = TurfSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            Rating.objects.create(turf_id=Turf.objects.get(id=serializer.data['id']))
+            return Response({'message': 'Turf registered successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetTurf(APIView):
     @staticmethod
     def get(request):
-        turf = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'latitude', 'longitude',
-                                         'total_nets', 'image', 'contact')
+        turf = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact')
         serializer = PartialTurfSerializer(turf, many=True)
         ids = []
         for i in serializer.data:
@@ -62,12 +44,13 @@ class GetTurfDetails(APIView):
         end_time = turf.end_time
         time_slots = []
         while start_time <= end_time:
-            time_slots.append(start_time.strftime('%H:%M'))
-            start_time += timedelta(hours=1)
+            time_slots.append(start_time.strftime("%H:%M"))
+            start_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
+            start_time = datetime.strptime(start_time, "%H:%M").time()
         available_nets = []
         for time_slot in time_slots:
             if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
-                                          time=time_slot)) == turf.total_nets:
+                                          time=time_slot)) < turf.total_nets:
                 available_nets.append({'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
                     turf_id=turf.id, date=request.GET.get('date'), time=time_slot))})
         return Response({'turf': serializer.data, 'available_nets': available_nets}, status=status.HTTP_200_OK)

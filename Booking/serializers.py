@@ -18,8 +18,7 @@ class RatingSerializer(serializers.ModelSerializer):
 class PartialTurfSerializer(serializers.ModelSerializer):
     class Meta:
         model = Turf
-        fields = ['id', 'name', 'start_time', 'end_time', 'latitude', 'longitude',
-                  'total_nets', 'image', 'contact']
+        fields = ['id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact']
 
 
 class TimingsSerializer(serializers.ModelSerializer):

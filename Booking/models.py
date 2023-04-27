@@ -80,7 +80,7 @@ class Booking(models.Model):
     object = models.manager
 
     def __str__(self):
-        return self.user
+        return str(self.user)
 
 
 class Profile(models.Model):
