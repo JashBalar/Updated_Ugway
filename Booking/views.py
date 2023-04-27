@@ -51,8 +51,16 @@ class GetTurfDetails(APIView):
         for time_slot in time_slots:
             if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
                                           time=time_slot)) < turf.total_nets:
-                available_nets.append({'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
-                    turf_id=turf.id, date=request.GET.get('date'), time=time_slot))})
+                if Timings.objects.filter(turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).exists():
+                    available_nets.append({
+                        'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+                            turf_id=turf.id, date=request.GET.get('date'), time=time_slot)),
+                        'price': Timings.objects.filter(
+                            turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).values('price')
+                    })
+                else:
+                    available_nets.append({'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+                        turf_id=turf.id, date=request.GET.get('date'), time=time_slot))})
         return Response({'turf': serializer.data, 'available_nets': available_nets}, status=status.HTTP_200_OK)
 
 
@@ -98,12 +106,14 @@ class GetTurfRating(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class GetTurfTimings(APIView):
+class GiveTurfTimings(APIView):
     @staticmethod
-    def get(request):
-        timings = Timings.objects.filter(turf_id=request.GET.get('id'))
-        serializer = TimingsSerializer(timings, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(request):
+        serializer = TimingsSerializer(data=request.data)
+        if serializer:
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @method_decorator(login_required, name='dispatch')
