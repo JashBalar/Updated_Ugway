@@ -1,5 +1,5 @@
 import random
-from datetime import timedelta, time, datetime
+from datetime import timedelta, datetime
 from django.contrib.auth.decorators import login_required
 from django.db.models import F
 from django.utils.decorators import method_decorator
@@ -11,6 +11,7 @@ from rest_framework import status
 from .helper import MessageHandler
 
 
+@method_decorator(login_required, name='dispatch')
 class RegisterTurf(APIView):
     @staticmethod
     def post(request):
@@ -22,17 +23,107 @@ class RegisterTurf(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(login_required, name='dispatch')
+class ManagerTotalTurfs(APIView):
+    @staticmethod
+    def get(request):
+        turf = Turf.objects.filter(manager=request.user).values('id', 'name')
+        return Response({'total_turfs': turf}, status=status.HTTP_200_OK)
+
+
+@method_decorator(login_required, name='dispatch')
+class ManagerTurfDetails(APIView):
+    @staticmethod
+    def get(request):
+        turf = Turf.objects.get(id=request.GET.get('id')).values(
+            'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+        )
+        serializer = PartialTurfSerializer(turf)
+        start_time = turf.start_time
+        end_time = turf.end_time
+        time_slots = []
+        while start_time <= end_time:
+            time_slots.append(start_time.strftime("%H:%M"))
+            start_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
+            start_time = datetime.strptime(start_time, "%H:%M").time()
+        available_nets = []
+        for time_slot in time_slots:
+            if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
+                                          time=time_slot)) < turf.total_nets:
+                if Timings.objects.filter(turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).exists():
+                    available_nets.append({
+                        'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+                            turf_id=turf.id, date=request.GET.get('date'), time=time_slot)),
+                        'price': Timings.objects.filter(
+                            turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).values('price')
+                    })
+                else:
+                    available_nets.append({'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+                        turf_id=turf.id, date=request.GET.get('date'), time=time_slot))})
+        return Response({'turf': serializer.data, 'available_nets': available_nets}, status=status.HTTP_200_OK)
+
+
 class GetTurf(APIView):
     @staticmethod
     def get(request):
-        turf = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact')
-        serializer = PartialTurfSerializer(turf, many=True)
-        ids = []
-        for i in serializer.data:
-            ids.append(i['id'])
-        rating = Rating.objects.filter(turf_id__in=ids)
-        rating_serializer = RatingSerializer(rating, many=True)
-        return Response({'turf': serializer.data, 'rating': rating_serializer.data}, status=status.HTTP_200_OK)
+        """
+        provide filter_data and filter
+        filter = 1 -> filter by name
+        filter = 2 -> filter by ascending price
+        filter = 3 -> filter by descending price
+        filter = 4 -> filter by rating
+        :param request:
+        :return:
+        """
+        if request.GET.get('filter') == 1:
+            turfs = Turf.objects.filter(name=request.GET.get('filter_data')).values(
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+            )
+        elif request.GET.get('filter') == 2:
+            turfs = Turf.objects.all().order_by('price').values(
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+            )
+        elif request.GET.get('filter') == 3:
+            turfs = Turf.objects.all().order_by('-price').values(
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+            )
+        elif request.GET.get('filter') == 4:
+            turfs = Turf.objects.all().order_by('-rating__rating_5_count').values(
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+            )
+        else:
+            turfs = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact')
+        turfs_list = []
+        for turf in turfs:
+            serializer = PartialTurfSerializer(turf, many=True)
+            start_time = turf.start_time
+            end_time = turf.end_time
+            time_slots = []
+            while start_time <= end_time:
+                time_slots.append(start_time.strftime("%H:%M"))
+                start_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
+                start_time = datetime.strptime(start_time, "%H:%M").time()
+            available_nets = []
+            for time_slot in time_slots:
+                if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
+                                              time=time_slot)) < turf.total_nets:
+                    if Timings.objects.filter(turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).exists():
+                        available_nets.append({
+                            'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+                                turf_id=turf.id, date=request.GET.get('date'), time=time_slot)),
+                            'price': Timings.objects.filter(
+                                turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).values('price')
+                        })
+                    else:
+                        available_nets.append({'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+                            turf_id=turf.id, date=request.GET.get('date'), time=time_slot))})
+            ids = []
+            for i in serializer.data:
+                ids.append(i['id'])
+            rating = Rating.objects.filter(turf_id__in=ids)
+            rating_serializer = RatingSerializer(rating, many=True)
+            turfs_list.append({'turf': serializer.data, 'rating': rating_serializer.data, 'available_nets': available_nets})
+        return Response({'turfs': turfs_list}, status=status.HTTP_200_OK)
 
 
 class GetTurfDetails(APIView):
@@ -145,7 +236,8 @@ class BookTurf(APIView):
         booked = []
         for i in booking_details:
             if len(Booking.objects.filter(turf_id=turf_data, date=booking_details[i]['date'],
-                                          time=booking_details[i]['time'])) == 3:
+                                          time=booking_details[i]['time'])) == Turf.objects.get(
+                    id=turf_data).total_nets:
                 booked.append(booking_details[i])
                 pass
             serializers.append(BookingSerializer(data={

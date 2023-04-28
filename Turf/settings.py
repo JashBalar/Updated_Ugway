@@ -87,6 +87,10 @@ REST_FRAMEWORK = {
     ),
 }
 
+DJOSER = {
+    'USER_CREATE_PASSWORD_RETYPE': True,
+}
+
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
