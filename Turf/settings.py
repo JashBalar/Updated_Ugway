@@ -142,15 +142,19 @@ STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-ACCOUNT_SID = 'ACbad44c323e777a2a2c92f4d2028d0998'
-AUTH_TOKEN = 'f585822194e439681208800a2bb8cf95'
+# ACCOUNT_SID = 'AC73a1228ff44ba7dc39bd1c5aa67ad3dd'
+# AUTH_TOKEN = '7c71ec5f795120e224d89e69d701d88d'
 COUNTRY_CODE = '+91'
-TWILIO_PHONE_NUMBER = '+15077087587'
+# TWILIO_PHONE_NUMBER = '+16205260894'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL = 'goboxconfirmation@gmail.com'
-PASSWORD = 'jash@gobox2111'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
