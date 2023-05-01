@@ -243,6 +243,59 @@ class BookTurf(APIView):
         return Response(serializers, status=status.HTTP_201_CREATED)
 
 
+@method_decorator(login_required, name='dispatch')
+class ManagerBookTurf(APIView):
+    @staticmethod
+    def post(request):
+        """
+        "details": [
+        {
+            "date": "",
+            "time": "",
+            "price": ""
+        },
+        {
+            "date": "",
+            "time": "",
+            "price": ""
+        }
+    ]
+        :param request:
+        :return:
+        """
+        manager_id = Turf.objects.filter(id=request.data['turf']).values('manager_id')
+        if request.data['user'] != list(manager_id)[0]['manager_id']:
+            return Response({'message': 'You are not authorized to book this turf'}, status=status.HTTP_401_UNAUTHORIZED)
+        booking_data = request.data
+        turf_data = booking_data['turf']
+        user_data = booking_data['user']
+        booking_details = booking_data['details']
+        serializers = []
+        booked = []
+        for i in booking_details:
+            if len(Booking.objects.filter(turf_id=turf_data, date=i['date'],
+                                          time=i['time'])) == Turf.objects.get(
+                    id=turf_data).total_nets:
+                booked.append(i)
+                pass
+            serializers.append({
+                'turf': turf_data,
+                'user': user_data,
+                'date': i['date'],
+                'time': i['time'],
+                'price': i['price']
+            })
+        if booked:
+            return Response({'booked': booked}, status=status.HTTP_400_BAD_REQUEST)
+        for serializer in serializers:
+            serial = BookingSerializer(data=serializer)
+            if serial.is_valid():
+                serial.save()
+            else:
+                return Response(serial.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializers, status=status.HTTP_201_CREATED)
+
+
 class GetBookings(APIView):
     @staticmethod
     def get(request):
