@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.db.models import F
 from django.utils.decorators import method_decorator
 from .serializers import TurfSerializer, RatingSerializer, TimingsSerializer, BookingSerializer, PartialTurfSerializer, \
-    ProfileSerializer
+    ProfileSerializer, TemporaryTurfSerializer
 from .models import Turf, Rating, Timings, Booking, Profile
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -252,12 +252,12 @@ class GetBookings(APIView):
     def get(request):
         booking = Booking.objects.filter(user_id=request.GET.get('id'))
         serializer = BookingSerializer(booking, many=True)
-        turfs_id = []
-        for i in serializer.data:
-            turfs_id.append(i['turf'])
-        turfs = Turf.objects.filter(id__in=turfs_id).values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact')
-        turf_serializer = PartialTurfSerializer(turfs, many=True)
-        return Response({'bookings': serializer.data, 'turfs': turf_serializer.data}, status=status.HTTP_200_OK)
+        data = serializer.data
+        for i in data:
+            turfs = Turf.objects.filter(id=i['turf']).values('name')
+            turf_serializer = TemporaryTurfSerializer(turfs, many=True)
+            i.update({"name": turf_serializer.data[0]['name']})
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class OTPSend(APIView):
