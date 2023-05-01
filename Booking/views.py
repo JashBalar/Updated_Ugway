@@ -21,7 +21,6 @@ class RegisterTurf(APIView):
         serializer = TurfSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            print(serializer.data)
             Rating.objects.create(turf_id=Turf.objects.get(name=serializer.data['name']).id)
             send_mail("New Turf Registered", str(serializer.data), settings.EMAIL_HOST_USER, ['goboxconfirmation@gmail.com'])
             return Response({'message': 'Turf registered successfully'}, status=status.HTTP_201_CREATED)
@@ -221,7 +220,6 @@ class BookTurf(APIView):
         booking_details = booking_data['details']
         serializers = []
         booked = []
-        print(booking_details[0]['date'])
         for i in booking_details:
             if len(Booking.objects.filter(turf_id=turf_data, date=i['date'],
                                           time=i['time'])) == Turf.objects.get(
@@ -280,3 +278,20 @@ class OTPVerify(APIView):
             Profile.objects.filter(phone_number=request.data['phone_number']).update(is_verified=True)
             return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
         return Response({'message': 'OTP verification failed'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileDetails(APIView):
+    @staticmethod
+    def get(request):
+        profile = Profile.objects.get(user=request.GET.get('id'))
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def put(request):
+        profile = Profile.objects.get(user=request.data['user'])
+        serializer = ProfileSerializer(profile, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Profile updated successfully'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

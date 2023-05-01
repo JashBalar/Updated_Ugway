@@ -2,7 +2,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path
 from .views import RegisterTurf, GetTurf, GetTurfDetails, GiveTurfRating, GetTurfRating, GiveTurfTimings, BookTurf, \
-    GetBookings, OTPSend, OTPVerify, ManagerTotalTurfs, ManagerTurfDetails
+    GetBookings, OTPSend, OTPVerify, ManagerTotalTurfs, ManagerTurfDetails, ProfileDetails
 
 urlpatterns = [
                   path('register-turf/', RegisterTurf.as_view()),
@@ -17,6 +17,7 @@ urlpatterns = [
                   path('otp-verify/', OTPVerify.as_view()),
                   path('manager-total-turfs/', ManagerTotalTurfs.as_view()),
                   path('manager-turf-details/', ManagerTurfDetails.as_view()),
+                  path('profile-details/', ProfileDetails.as_view()),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL,
