@@ -30,7 +30,7 @@ class TemporaryTurfSerializer(serializers.ModelSerializer):
 class PartialProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['contact']
+        fields = ['phone_number']
 
 class TimingsSerializer(serializers.ModelSerializer):
     class Meta:

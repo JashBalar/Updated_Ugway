@@ -255,6 +255,8 @@ class GetBookings(APIView):
             i.update({"name": turf_serializer.data[0]['name'], "contact": turf_serializer.data[0]['contact']})
         return Response(data, status=status.HTTP_200_OK)
 
+
+@method_decorator(login_required, name='dispatch')
 class GetManagerBookings(APIView):
     @staticmethod
     def get(request):
@@ -262,9 +264,9 @@ class GetManagerBookings(APIView):
         serializer = BookingSerializer(booking, many=True)
         data = serializer.data
         for i in data:
-            users = Profile.objects.filter(user_id=i['user']).values('contact')
+            users = Profile.objects.filter(user_id=i['user']).values('phone_number')
             user_serializer = PartialProfileSerializer(users, many=True)
-            i.update({"contact": user_serializer.data[0]['contact']})
+            i.update({"contact": user_serializer.data[0]['phone_number']})
         return Response(data, status=status.HTTP_200_OK)
 
 class OTPSend(APIView):
