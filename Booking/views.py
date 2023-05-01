@@ -252,7 +252,12 @@ class GetBookings(APIView):
     def get(request):
         booking = Booking.objects.filter(user_id=request.GET.get('id'))
         serializer = BookingSerializer(booking, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        turfs_id = []
+        for i in serializer.data:
+            turfs_id.append(i['turf'])
+        turfs = Turf.objects.filter(id__in=turfs_id).values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact')
+        turf_serializer = PartialTurfSerializer(turfs, many=True)
+        return Response({'bookings': serializer.data, 'turfs': turf_serializer.data}, status=status.HTTP_200_OK)
 
 
 class OTPSend(APIView):
