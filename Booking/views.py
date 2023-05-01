@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.db.models import F
 from django.utils.decorators import method_decorator
 from .serializers import TurfSerializer, RatingSerializer, TimingsSerializer, BookingSerializer, PartialTurfSerializer, \
-    ProfileSerializer, TemporaryTurfSerializer
+    ProfileSerializer, TemporaryTurfSerializer, PartialProfileSerializer
 from .models import Turf, Rating, Timings, Booking, Profile
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from rest_framework import status
 from .helper import MessageHandler
 
 
-@method_decorator(login_required, name='dispatch')
+# @method_decorator(login_required, name='dispatch')
 class RegisterTurf(APIView):
     @staticmethod
     def post(request):
@@ -22,12 +22,12 @@ class RegisterTurf(APIView):
         if serializer.is_valid():
             serializer.save()
             Rating.objects.create(turf_id=Turf.objects.get(name=serializer.data['name']).id)
-            send_mail("New Turf Registered", str(serializer.data), settings.EMAIL_HOST_USER, ['goboxconfirmation@gmail.com'])
+            # send_mail("New Turf Registered", str(serializer.data), settings.EMAIL_HOST_USER, ['goboxconfirmation@gmail.com'])
             return Response({'message': 'Turf registered successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(login_required, name='dispatch')
+# @method_decorator(login_required, name='dispatch')
 class ManagerTotalTurfs(APIView):
     @staticmethod
     def get(request):
@@ -35,7 +35,7 @@ class ManagerTotalTurfs(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@method_decorator(login_required, name='dispatch')
+# @method_decorator(login_required, name='dispatch')
 class ManagerTurfDetails(APIView):
     @staticmethod
     def get(request):
@@ -79,22 +79,22 @@ class GetTurf(APIView):
         """
         if request.GET.get('filter') == 1:
             turfs = Turf.objects.filter(name=request.GET.get('filter_data')).values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
         elif request.GET.get('filter') == 2:
             turfs = Turf.objects.all().order_by('price').values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
         elif request.GET.get('filter') == 3:
             turfs = Turf.objects.all().order_by('-price').values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
         elif request.GET.get('filter') == 4:
             turfs = Turf.objects.all().order_by('-rating__rating_5_count').values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact'
+                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
         else:
-            turfs = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact')
+            turfs = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price')
         temp_turfs = []
         for x in turfs:
             temp_turfs.append(x)
@@ -193,7 +193,7 @@ class GiveTurfTimings(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(login_required, name='dispatch')
+# @method_decorator(login_required, name='dispatch')
 class BookTurf(APIView):
     @staticmethod
     def post(request):
@@ -216,7 +216,6 @@ class BookTurf(APIView):
         booking_data = request.data
         turf_data = booking_data['turf']
         user_data = booking_data['user']
-        contact_data = booking_data['contact']
         booking_details = booking_data['details']
         serializers = []
         booked = []
@@ -229,7 +228,6 @@ class BookTurf(APIView):
             serializers.append({
                 'turf': turf_data,
                 'user': user_data,
-                'contact': contact_data,
                 'date': i['date'],
                 'time': i['time'],
                 'price': i['price']
@@ -252,16 +250,27 @@ class GetBookings(APIView):
         serializer = BookingSerializer(booking, many=True)
         data = serializer.data
         for i in data:
-            turfs = Turf.objects.filter(id=i['turf']).values('name')
+            turfs = Turf.objects.filter(id=i['turf']).values('name', 'contact') 
             turf_serializer = TemporaryTurfSerializer(turfs, many=True)
-            i.update({"name": turf_serializer.data[0]['name']})
-        return Response(data, status=status.HTTP_201_CREATED)
+            i.update({"name": turf_serializer.data[0]['name'], "contact": turf_serializer.data[0]['contact']})
+        return Response(data, status=status.HTTP_200_OK)
 
+class GetManagerBookings(APIView):
+    @staticmethod
+    def get(request):
+        booking = Booking.objects.filter(turf_id=request.GET.get('id'))
+        serializer = BookingSerializer(booking, many=True)
+        data = serializer.data
+        for i in data:
+            users = Profile.objects.filter(user_id=i['user']).values('contact')
+            user_serializer = PartialProfileSerializer(users, many=True)
+            i.update({"contact": user_serializer.data[0]['contact']})
+        return Response(data, status=status.HTTP_200_OK)
 
 class OTPSend(APIView):
     @staticmethod
     def post(request):
-        otp = random.randint(100000, 999999)
+        otp = random.randint(1000, 9999)
         serializer = ProfileSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(otp=f'{otp}')
@@ -283,7 +292,7 @@ class OTPVerify(APIView):
 class ProfileDetails(APIView):
     @staticmethod
     def get(request):
-        profile = Profile.objects.get(user=request.GET.get('id'))
+        profile = Profile.objects.filter(user_id=request.GET.get('id'))
         serializer = ProfileSerializer(profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

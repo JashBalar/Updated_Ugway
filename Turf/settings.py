@@ -25,7 +25,10 @@ SECRET_KEY = 'django-insecure-&2juahsue(y5linjq$i11ye2ysd-e_rbhdiy9*c_-j&^uvyz&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '10.0.2.2',
+    '127.0.0.1'
+]
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -142,10 +145,10 @@ STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# ACCOUNT_SID = 'AC73a1228ff44ba7dc39bd1c5aa67ad3dd'
-# AUTH_TOKEN = '7c71ec5f795120e224d89e69d701d88d'
+ACCOUNT_SID = 'ACbad44c323e777a2a2c92f4d2028d0998'
+AUTH_TOKEN = '21f7fba2aa922242bd377681a5cd3c55'
 COUNTRY_CODE = '+91'
-# TWILIO_PHONE_NUMBER = '+16205260894'
+TWILIO_PHONE_NUMBER = '+15077087587'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

@@ -73,7 +73,6 @@ class Timings(models.Model):
 class Booking(models.Model):
     turf = models.ForeignKey(Turf, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    contact = models.CharField(max_length=10)
     date = models.DateField()
     time = models.TimeField()
     price = models.PositiveSmallIntegerField()

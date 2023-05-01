@@ -18,7 +18,7 @@ class TimingAdmin(ExportActionMixin, admin.ModelAdmin):
 
 
 class BookingAdmin(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('turf', 'user', 'contact', 'date', 'time', 'price')
+    list_display = ('turf', 'user', 'date', 'time', 'price')
 
 
 admin.site.register(Turf, TurfAdmin)

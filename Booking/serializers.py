@@ -24,8 +24,13 @@ class PartialTurfSerializer(serializers.ModelSerializer):
 class TemporaryTurfSerializer(serializers.ModelSerializer):
     class Meta:
         model = Turf
-        fields = ['name']
+        fields = ['name', 'contact']
 
+
+class PartialProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['contact']
 
 class TimingsSerializer(serializers.ModelSerializer):
     class Meta:
