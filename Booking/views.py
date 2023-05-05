@@ -77,19 +77,19 @@ class GetTurf(APIView):
         :param request:
         :return:
         """
-        if request.GET.get('filter') == 1:
-            turfs = Turf.objects.filter(name=request.GET.get('filter_data')).values(
+        if request.GET.get('filter') == str(1):
+            turfs = Turf.objects.filter(name__icontains=request.GET.get('filter_data')).values(
                 'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
-        elif request.GET.get('filter') == 2:
+        elif request.GET.get('filter') == str(2):
             turfs = Turf.objects.all().order_by('price').values(
                 'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
-        elif request.GET.get('filter') == 3:
+        elif request.GET.get('filter') == str(3):
             turfs = Turf.objects.all().order_by('-price').values(
                 'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
-        elif request.GET.get('filter') == 4:
+        elif request.GET.get('filter') == str(4):
             turfs = Turf.objects.all().order_by('-rating__rating_5_count').values(
                 'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
             )
