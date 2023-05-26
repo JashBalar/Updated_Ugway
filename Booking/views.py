@@ -347,7 +347,7 @@ class OTPVerify(APIView):
 class ProfileDetails(APIView):
     @staticmethod
     def get(request):
-        profile = Profile.objects.get(user_id=request.GET.get('id'))
+        profile = Profile.objects.get(user=request.data['id'])
         serializer = ProfileSerializer(profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
