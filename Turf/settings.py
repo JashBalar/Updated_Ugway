@@ -26,8 +26,9 @@ SECRET_KEY = 'django-insecure-&2juahsue(y5linjq$i11ye2ysd-e_rbhdiy9*c_-j&^uvyz&a
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    'Ugway.pythonanywhere.com',
     '10.0.2.2',
-    '127.0.0.1'
+    '127.0.0.1',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -145,10 +146,10 @@ STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-ACCOUNT_SID = 'ACbad44c323e777a2a2c92f4d2028d0998'
-AUTH_TOKEN = '21f7fba2aa922242bd377681a5cd3c55'
+ACCOUNT_SID = 'AC73a1228ff44ba7dc39bd1c5aa67ad3dd'
+AUTH_TOKEN = 'fa04125c1effb8febedba7abd6a8212a'
 COUNTRY_CODE = '+91'
-TWILIO_PHONE_NUMBER = '+15077087587'
+TWILIO_PHONE_NUMBER = '+16205260894'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -157,7 +158,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST_USER = 'goboxbook@gmail.com'
-EMAIL_HOST_PASSWORD = 'jaexuxoubcqnueab'
+EMAIL_HOST_PASSWORD = 'owiksqbmwxalhhbh'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

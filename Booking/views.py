@@ -22,7 +22,7 @@ class RegisterTurf(APIView):
         if serializer.is_valid():
             serializer.save()
             Rating.objects.create(turf_id=Turf.objects.get(name=serializer.data['name']).id)
-            # send_mail("New Turf Registered", str(serializer.data), settings.EMAIL_HOST_USER, ['goboxconfirmation@gmail.com'])
+            send_mail("New Turf Registered", str(serializer.data), settings.EMAIL_HOST_USER, ['goboxconfirmation@gmail.com'])
             return Response({'message': 'Turf registered successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -77,24 +77,26 @@ class GetTurf(APIView):
         :param request:
         :return:
         """
-        if request.GET.get('filter') == str(1):
-            turfs = Turf.objects.filter(name__icontains=request.GET.get('filter_data')).values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
-            )
-        elif request.GET.get('filter') == str(2):
-            turfs = Turf.objects.all().order_by('price').values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
-            )
-        elif request.GET.get('filter') == str(3):
-            turfs = Turf.objects.all().order_by('-price').values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
-            )
-        elif request.GET.get('filter') == str(4):
-            turfs = Turf.objects.all().order_by('-rating__rating_5_count').values(
-                'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
-            )
+        if 'filter' in request.GET:
+            if request.GET.get('filter') == str(1):
+                turfs = Turf.objects.filter(name__icontains=request.GET.get('filter_data')).values(
+                    'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
+                )
+            elif request.GET.get('filter') == str(2):
+                turfs = Turf.objects.all().order_by('price').values(
+                    'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
+                )
+            elif request.GET.get('filter') == str(3):
+                turfs = Turf.objects.all().order_by('-price').values(
+                    'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
+                )
+            elif request.GET.get('filter') == str(4):
+                turfs = Turf.objects.all().order_by('-rating__rating_5_count').values(
+                    'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
+                )
         else:
             turfs = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price')
+        print(request.GET.get('date'))
         temp_turfs = []
         for x in turfs:
             temp_turfs.append(x)
@@ -105,7 +107,11 @@ class GetTurf(APIView):
             time_slots = []
             while start_time <= end_time:
                 time_slots.append(start_time.strftime("%H:%M"))
-                start_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
+                temp_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
+                if(temp_time[:2] == '00'):
+                    break
+                else:
+                    start_time = temp_time
                 start_time = datetime.strptime(start_time, "%H:%M").time()
             available_nets = []
             for time_slot in time_slots:
@@ -135,10 +141,15 @@ class GetTurfDetails(APIView):
         start_time = turf.start_time
         end_time = turf.end_time
         time_slots = []
-        while start_time <= end_time:
-            time_slots.append(start_time.strftime("%H:%M"))
+        time_slots.append(start_time.strftime("%H:%M"))
+
+        while True:
             start_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
             start_time = datetime.strptime(start_time, "%H:%M").time()
+            time_slots.append(start_time.strftime("%H:%M"))
+            if start_time == end_time :
+                print(start_time,start_time <= end_time,type(start_time), type(end_time))
+                break
         available_nets = []
         for time_slot in time_slots:
             if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
@@ -303,7 +314,7 @@ class GetBookings(APIView):
         serializer = BookingSerializer(booking, many=True)
         data = serializer.data
         for i in data:
-            turfs = Turf.objects.filter(id=i['turf']).values('name', 'contact') 
+            turfs = Turf.objects.filter(id=i['turf']).values('name', 'contact')
             turf_serializer = TemporaryTurfSerializer(turfs, many=True)
             i.update({"name": turf_serializer.data[0]['name'], "contact": turf_serializer.data[0]['contact']})
         return Response(data, status=status.HTTP_200_OK)
@@ -347,7 +358,7 @@ class OTPVerify(APIView):
 class ProfileDetails(APIView):
     @staticmethod
     def get(request):
-        profile = Profile.objects.get(user=request.data['id'])
+        profile = Profile.objects.get(user=request.GET.get('id'))
         serializer = ProfileSerializer(profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

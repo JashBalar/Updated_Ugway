@@ -1,17 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.files import File
-from io import BytesIO
-from PIL import Image
 
-def compress_image(image):
-    im = Image.open(image)
-    if im.mode != 'RGB':
-        im = im.convert('RGB')
-    im_io = BytesIO()
-    im.save(im_io, 'jpeg', quality=70, optimize=True)
-    new_image = File(im_io, name=image.name)
-    return new_image
+
 
 class Turf(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -38,12 +28,6 @@ class Turf(models.Model):
     def __str__(self):
         return self.name + ' - ' + self.city
 
-    def save(self, force_insert=False, force_update=False, using=None, *args, **kwargs):
-        if self.image:
-            image = self.image
-            if image.size > 0.3 * 1024 * 1024:  # if size greater than 300kb then it will compress image
-                self.picture = compress_image(image)
-        super(Turf, self).save(*args, **kwargs)
 
 
 class Rating(models.Model):
