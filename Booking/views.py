@@ -5,8 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.db.models import F
 from django.utils.decorators import method_decorator
-from .serializers import TurfSerializer, RatingSerializer, TimingsSerializer, BookingSerializer, PartialTurfSerializer, \
-    ProfileSerializer, TemporaryTurfSerializer, PartialProfileSerializer
+from .serializers import TurfSerializer, RatingSerializer, TimingsSerializer, BookingSerializer, PartialTurfSerializer, ProfileSerializer, TemporaryTurfSerializer, PartialProfileSerializer
 from .models import Turf, Rating, Timings, Booking, Profile
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -27,7 +26,7 @@ class RegisterTurf(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# @method_decorator(login_required, name='dispatch')
+#@method_decorator(login_required, name='dispatch')
 class ManagerTotalTurfs(APIView):
     @staticmethod
     def get(request):
@@ -35,19 +34,55 @@ class ManagerTotalTurfs(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# @method_decorator(login_required, name='dispatch')
+# # @method_decorator(login_required, name='dispatch')
+# class ManagerTurfDetails(APIView):    ["commented on "26-06-2023""]
+#     @staticmethod
+#     def get(request):
+#         turf = Turf.objects.get(id=request.GET.get('id'), manager=request.GET.get('user'))
+#         serializer = TurfSerializer(turf)
+#         start_time = turf.start_time
+#         end_time = turf.end_time
+#         time_slots = []
+#         while start_time <= end_time:
+#             time_slots.append(start_time.strftime("%H:%M"))
+#             start_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
+#             start_time = datetime.strptime(start_time, "%H:%M").time()
+#         available_nets = []
+#         for time_slot in time_slots:
+#             if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
+#                                           time=time_slot)) < turf.total_nets:
+#                 if Timings.objects.filter(turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).exists():
+#                     available_nets.append({
+#                         'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+#                             turf_id=turf.id, date=request.GET.get('date'), time=time_slot)),
+#                         'price': Timings.objects.filter(
+#                             turf_id=turf.id, start_time=time_slot, date=request.GET.get('date')).values('price')
+#                     })
+#                 else:
+#                     available_nets.append({'time': time_slot, 'available': turf.total_nets - len(Booking.objects.filter(
+#                         turf_id=turf.id, date=request.GET.get('date'), time=time_slot))})
+#         return Response({'turf': serializer.data, 'available_nets': available_nets}, status=status.HTTP_200_OK)
+
+# ["updated on "26-06-2023""]
+#@method_decorator(login_required, name='dispatch')
 class ManagerTurfDetails(APIView):
     @staticmethod
     def get(request):
         turf = Turf.objects.get(id=request.GET.get('id'), manager=request.GET.get('user'))
+        # turf = Turf.objects.get(id=request.GET.get('id'))
         serializer = TurfSerializer(turf)
         start_time = turf.start_time
         end_time = turf.end_time
         time_slots = []
-        while start_time <= end_time:
-            time_slots.append(start_time.strftime("%H:%M"))
+        time_slots.append(start_time.strftime("%H:%M"))
+
+        while True:
             start_time = (datetime.combine(datetime.today(), start_time) + timedelta(hours=1)).time().strftime("%H:%M")
             start_time = datetime.strptime(start_time, "%H:%M").time()
+            time_slots.append(start_time.strftime("%H:%M"))
+            if start_time == end_time :
+                print(start_time,start_time <= end_time,type(start_time), type(end_time))
+                break
         available_nets = []
         for time_slot in time_slots:
             if len(Booking.objects.filter(turf_id=turf.id, date=request.GET.get('date'),
@@ -79,23 +114,23 @@ class GetTurf(APIView):
         """
         if 'filter' in request.GET:
             if request.GET.get('filter') == str(1):
-                turfs = Turf.objects.filter(name__icontains=request.GET.get('filter_data')).values(
+                turfs = Turf.objects.filter(name__icontains=request.GET.get('filter_data'), verified=True).values(
                     'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
                 )
             elif request.GET.get('filter') == str(2):
-                turfs = Turf.objects.all().order_by('price').values(
+                turfs = Turf.objects.filter(verified=True).order_by('price').values(
                     'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
                 )
             elif request.GET.get('filter') == str(3):
-                turfs = Turf.objects.all().order_by('-price').values(
+                turfs = Turf.objects.filter(verified=True).order_by('-price').values(
                     'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
                 )
             elif request.GET.get('filter') == str(4):
-                turfs = Turf.objects.all().order_by('-rating__rating_5_count').values(
+                turfs = Turf.objects.filter(verified=True).order_by('-rating__rating_5_count').values(
                     'id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price'
                 )
         else:
-            turfs = Turf.objects.all().values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price')
+            turfs = Turf.objects.filter(verified=True).values('id', 'name', 'start_time', 'end_time', 'total_nets', 'image', 'contact', 'price')
         print(request.GET.get('date'))
         temp_turfs = []
         for x in turfs:
@@ -193,18 +228,35 @@ class GetTurfRating(APIView):
         serializer = RatingSerializer(rating)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
+# updated on 27/06/2023
 class GiveTurfTimings(APIView):
     @staticmethod
     def post(request):
         serializer = TimingsSerializer(data=request.data)
+
+        dataExist = Timings.objects.filter(turf_id=request.data['turf'] , start_time = request.data['start_time'] , date = request.data['date']).exists()
+
         if serializer.is_valid():
-            serializer.save()
+            if dataExist:
+                oldData = Timings.objects.get(turf_id=request.data['turf'] , start_time = request.data['start_time'] , date = request.data['date'])
+                oldData.delete()
+                serializer.save()
+            else:
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# class GiveTurfTimings(APIView): ["COMMENTED ON 27/06/2023"]
+#     @staticmethod
+#     def post(request):
+#         serializer = TimingsSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# @method_decorator(login_required, name='dispatch')
+
+#@method_decorator(login_required, name='dispatch')
 class BookTurf(APIView):
     @staticmethod
     def post(request):
@@ -253,8 +305,8 @@ class BookTurf(APIView):
                 return Response(serial.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializers, status=status.HTTP_201_CREATED)
 
-
-@method_decorator(login_required, name='dispatch')
+#["commented on "26-06-2023""]
+#@method_decorator(login_required, name='dispatch')
 class ManagerBookTurf(APIView):
     @staticmethod
     def post(request):
@@ -319,8 +371,9 @@ class GetBookings(APIView):
             i.update({"name": turf_serializer.data[0]['name'], "contact": turf_serializer.data[0]['contact']})
         return Response(data, status=status.HTTP_200_OK)
 
+#  ["commented on "26-06-2023" "]
+#@method_decorator(login_required, name='dispatch')
 
-@method_decorator(login_required, name='dispatch')
 class GetManagerBookings(APIView):
     @staticmethod
     def get(request):

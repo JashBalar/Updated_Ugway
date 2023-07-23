@@ -147,7 +147,8 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 ACCOUNT_SID = 'AC73a1228ff44ba7dc39bd1c5aa67ad3dd'
-AUTH_TOKEN = 'fa04125c1effb8febedba7abd6a8212a'
+AUTH_TOKEN = '2289ccd6c16a82755f36f7932d5cdd54'
+# Previous token : fa04125c1effb8febedba7abd6a8212a replace this with above AUTH_TOKEN if didn't work.
 COUNTRY_CODE = '+91'
 TWILIO_PHONE_NUMBER = '+16205260894'
 
